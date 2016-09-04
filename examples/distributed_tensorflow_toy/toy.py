@@ -78,7 +78,7 @@ def main(_):
 
         train_feed = {X: train_X, Y: train_Y}
         _, step = sess.run([train_op, global_step], feed_dict= train_feed)
-	print '=========> step: %d' % step
+        print '=========> step: %d' % step
         print sess.run(w)
         print sess.run(b)
 
