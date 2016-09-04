@@ -18,12 +18,16 @@ docker build -t dtf .
 ## Start parameter server:
 在 10.10.10.94 上启动：
 ```
-docker run --net=host --privileged -v /var/lib/nvidia:/usr/local/nvidia/lib64 -v /mnt/cephfs:/mnt/cephfs -it dtf /bin/bash
+docker run --net=host --privileged \
+-v /var/lib/nvidia:/usr/local/nvidia/lib64 \
+-v /mnt/cephfs:/mnt/cephfs -it dtf /bin/bash
 ```
 
 在 docker container 中启动 toy.py，设置 `--job_name=ps` 和 `--task_index=0`：
 ```
-python toy.py  --ps_hosts=10.10.10.94:2222  --worker_hosts=10.10.10.191:2222 --job_name=ps --task_index=0
+python toy.py  \
+--ps_hosts=10.10.10.94:2222  --worker_hosts=10.10.10.191:2222 \
+--job_name=ps --task_index=0
 ```
 部分输出结果：
 ```
@@ -52,12 +56,16 @@ I tensorflow/core/distributed_runtime/rpc/grpc_server_lib.cc:202] Started server
 ## Start worker:
 在 10.10.10.191 上启动：
 ```
-docker run --net=host --privileged -v /var/lib/nvidia:/usr/local/nvidia/lib64 -v /mnt/cephfs:/mnt/cephfs -it dtf /bin/bash
+docker run --net=host --privileged \
+-v /var/lib/nvidia:/usr/local/nvidia/lib64 \
+-v /mnt/cephfs:/mnt/cephfs -it dtf /bin/bash
 ```
 
 在 docker container 中启动 toy.py，设置 `--job_name=worker` 和 `--task_index=0`：
 ```
-python toy.py  --ps_hosts=10.10.10.94:2222  --worker_hosts=10.10.10.191:2222 --job_name=worker --task_index=0
+python toy.py  \
+--ps_hosts=10.10.10.94:2222  --worker_hosts=10.10.10.191:2222 \
+--job_name=worker --task_index=0
 ```
 
 部分输出结果：
@@ -108,7 +116,7 @@ I tensorflow/core/distributed_runtime/rpc/grpc_server_lib.cc:202] Started server
 
 迭代 10 次后，权重和 offset 分别逼近 2 和 10。
 
-参考：
+## References：
 * https://github.com/tensorflow/tensorflow/blob/master/tensorflow/g3doc/how_tos/distributed/index.md
 * https://www.tensorflow.org/versions/master/how_tos/distributed/index.html
 * http://weibo.com/ttarticle/p/show?id=2309403988813608274928
