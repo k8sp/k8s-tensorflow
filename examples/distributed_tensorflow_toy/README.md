@@ -4,13 +4,13 @@
 * Nvidia driver libraries in the directory `/var/lib/nvidia` on host node
 * mount the NFS/CephFS to the same directory (e.g. /mnt/cephfs) on each node
 
-## Build the image
+## Build the image:
 ```
 docker build -t dtf .
 ```
 在 Dockefile 中，基于 10.10.10.94:5000/tensorflow:0.9.0-gpu 创建 dtf 测试 images，创建 example 文件夹，并将 toy.py 复制到镜像中供测试。
 
-## Test Guide：
+## Test Guide:
 * 使用 10.10.10.94 和 10.10.10.191 两台带有 GPUs 的节点测试。
 * 两个节点分别担当 worker 和 ps 角色。
 * 在 worker 上执行线性拟合的实验估计拟合的权重和 offset，迭代次数10次。
@@ -116,8 +116,9 @@ I tensorflow/core/distributed_runtime/rpc/grpc_server_lib.cc:202] Started server
 
 迭代 10 次后，权重和 offset 分别逼近 2 和 10。
 
-## References：
+## References
+* [监听在 localhost 的说明](https://github.com/tensorflow/tensorflow/issues/2925)
 * https://github.com/tensorflow/tensorflow/blob/master/tensorflow/g3doc/how_tos/distributed/index.md
-* https://www.tensorflow.org/versions/master/how_tos/distributed/index.html
+* https://github.com/tobegit3hub/tensorflow_examples/tree/master/distributed_tensorflow
 * http://weibo.com/ttarticle/p/show?id=2309403988813608274928
 * http://weibo.com/ttarticle/p/show?id=2309403987407065210809
