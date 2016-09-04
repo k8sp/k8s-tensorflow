@@ -6,9 +6,15 @@
 
 ## Build the image:
 ```
-docker build -t dtf .
+docker build -t toy .
 ```
-在 Dockefile 中，基于 10.10.10.94:5000/tensorflow:0.9.0-gpu 创建 dtf 测试 images，创建 example 文件夹，并将 toy.py 复制到镜像中供测试。
+在 Dockefile 中，基于 10.10.10.94:5000/tensorflow:0.9.0-gpu 创建 toy docker images，创建 example 文件夹，并将 toy.py 复制到镜像中供测试。
+
+上传至私有 docker registry, 方便其他机器下载测试：
+```
+docker tag toy 10.10.10.94:5000/toy
+docker push 10.10.10.94:5000/toy
+```
 
 ## Test Guide:
 * 使用 10.10.10.94 和 10.10.10.191 两台带有 GPUs 的节点测试。
@@ -20,7 +26,7 @@ docker build -t dtf .
 ```
 docker run --net=host --privileged \
 -v /var/lib/nvidia:/usr/local/nvidia/lib64 \
--v /mnt/cephfs:/mnt/cephfs -it dtf /bin/bash
+-v /mnt/cephfs:/mnt/cephfs -it 10.10.10.94:5000/toy /bin/bash
 ```
 
 在 docker container 中启动 toy.py，设置 `--job_name=ps` 和 `--task_index=0`：
@@ -31,6 +37,7 @@ python toy.py  \
 ```
 部分输出结果：
 ```
+...
 I tensorflow/core/common_runtime/gpu/gpu_init.cc:126] DMA: 0 1 2 3 4 5 6 7
 I tensorflow/core/common_runtime/gpu/gpu_init.cc:136] 0:   Y Y Y Y N N N N
 I tensorflow/core/common_runtime/gpu/gpu_init.cc:136] 1:   Y Y Y Y N N N N
@@ -58,7 +65,7 @@ I tensorflow/core/distributed_runtime/rpc/grpc_server_lib.cc:202] Started server
 ```
 docker run --net=host --privileged \
 -v /var/lib/nvidia:/usr/local/nvidia/lib64 \
--v /mnt/cephfs:/mnt/cephfs -it dtf /bin/bash
+-v /mnt/cephfs:/mnt/cephfs -it 10.10.10.94:5000/toy /bin/bash
 ```
 
 在 docker container 中启动 toy.py，设置 `--job_name=worker` 和 `--task_index=0`：
@@ -70,6 +77,7 @@ python toy.py  \
 
 部分输出结果：
 ```
+...
 I tensorflow/core/common_runtime/gpu/gpu_init.cc:126] DMA: 0 1 2 3
 I tensorflow/core/common_runtime/gpu/gpu_init.cc:136] 0:   Y Y Y Y
 I tensorflow/core/common_runtime/gpu/gpu_init.cc:136] 1:   Y Y Y Y
