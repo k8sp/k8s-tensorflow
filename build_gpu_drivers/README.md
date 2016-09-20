@@ -6,7 +6,7 @@
 * 方法 B：https://github.com/Clarifai/coreos-nvidia 此方法编译方便，推荐
 
 方案  | CoreOS Version | Nvidia driver 352.39 | Nvidia driver 367.35
-----|------|----|----
+--------|----------------|----|----
 方法 A | 1010.5.0(4.5.0-coreos-rc1)  | 工作正常 | 编译通过，不能正常工作（undefined in Nvidia-uvm）
 方法 A | 1068.9.0(4.6.3-coreos)   | 编译不通过 https://github.com/k8sp/k8s-tensorflow/issues/12 | 未尝试
 方法 B | 1010.5.0(4.5.0-coreos-rc1)   | 需要修改，打补丁 nvprocfs.patch | 编译通过，不能正常工作（undefined in Nvidia-uvm）
@@ -41,45 +41,20 @@ tools-[DRIVER_VERSION].tar.bz2
 modules-[COREOS_VERSION]-[DRIVER_VERSION].tar.bz2
 ```
 
+说明：
+1.
+
+
 ## 加载 drivers
-**Nvidia Drivers Installation Image**
 
-复制上述三个 `tar.gz` 文件，<tt><a href="Dockerfile">Dockerfile</a></tt> 创建驱动安装 images.
-
-```
-$ docker build -t cuda .
-```
-
-
-**Install Nvidia Drivers & Register GPU Devices (One-Time)**
-
-```
-# docker run -it --privileged cuda
-```
-
-```
-# ./mkdevs.sh
-```
+参照：[load GPU drivers](../load_gpu_drivers)
 
 
 ## 测试
-**设置动态库环境变量**
-
-```
-# docker run -it --privileged cuda /bin/bash
-# vi /etc/ld.so.conf.d/nvidia.conf
-```
-添加动态库所在目录 `/opt/nvidia`,保存 `nvidia.conf`
-
-刷新动态库系统目录
-```
-# ldconfig
-```
-
-
 **查看 GPU 信息**
 
 ```
+# docker run -it --rm --privileged cuda /bin/bash
 # root@9a1ab2d177b0:/opt/nvidia# ./nvidia-smi
 ```
 
