@@ -26,5 +26,5 @@ docker GPU 示例包括：
 
 ## 附加实验：
 
-* [k8s 使用 Ceph 作为 persistent volume](examples/k8s_ceph_volume)
-* [Run CPU distributed Tensorflow on k8s](examples/k8s_cpu)
+* k8s 使用 Ceph 作为 persistent volume
+* Run CPU distributed Tensorflow on k8s
