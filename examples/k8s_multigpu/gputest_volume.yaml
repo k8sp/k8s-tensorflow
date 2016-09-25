@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-list-gpu
+spec:
+  volumes:
+  - name: nvidia-libs-volume
+    hostPath: 
+      path: /var/lib/nvidia 
+  - name: nvidia-tools-volume
+    hostPath: 
+      path: /opt/bin
+  containers:
+  - name: nvidia-gpu
+    image: 10.10.10.94:5000/liuqs/list_gpu
+    volumeMounts:
+      - name: nvidia-libs-volume
+        mountPath: /usr/local/nvidia/lib64
+        readOnly: true
+      - name: nvidia-tools-volume
+        mountPath: /usr/local/nvidia/bin
+        readOnly: true
+    resources:
+      limits:
+        alpha.kubernetes.io/nvidia-gpu: 2
