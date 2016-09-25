@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nvidia-gpu-test2
+spec:
+  containers:
+  - name: nvidia-gpu
+    image: 10.10.10.94:5000/mnist
+    resources:
+      limits:
+        alpha.kubernetes.io/nvidia-gpu: 2
