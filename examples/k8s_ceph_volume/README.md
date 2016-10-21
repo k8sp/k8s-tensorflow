@@ -1,4 +1,4 @@
-# k8s 使用 cephfs 创建 PersistentVolume
+# k8s 使用 cephfs 创建 Persistent Volume
 
 ## 说明
 
@@ -35,7 +35,7 @@ kind: Secret
 metadata:
   name: ceph-secret
 data:
-  key: QVFCcHphMVhJbm5pRlJBQWVISER0ZjdvWmtxdkI4ZFhqUDcxL2c9PQ==
+  key: QVFBbGdMSlhHQ0ZmR3hBQWM1cGNBbEo1UU50ZUNTSXNuMzVscWc9PQ==
 ---
 kind: PersistentVolume
 apiVersion: v1
@@ -97,7 +97,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: loader
-          image: gcr.io/google-samples/tf-workshop:v2
+          image: 10.10.10.94:5000/liuqs/tensorflow:0.10.0-gpu
           command:
               - "/bin/sh"
               - "-c"
@@ -123,13 +123,29 @@ kubectl describe pod load-data
 通过上面的流程跑通了使用 cephfs 创建 PersistentVolume 和 PersistentVolumeClaim, 并能正确导入数据, 完成了 ceph 和 k8s 结合. tensorflow 或其他的 pod 只需要加入下面配置块, 就能正常挂载 ceph 了.
 - mountPath: 挂载到容器中的路径
 ```yaml
-          volumeMounts:
-            - name: tf-ceph
-              mountPath: /var/tensorflow
-      volumes:
-        - name: tf-ceph
-          persistentVolumeClaim:
-            claimName: tf-ceph
+kind: Pod
+apiVersion: v1
+metadata:
+  name: mypod
+spec:
+  containers:
+    - name: test_ceph_volume
+      image: 10.10.10.94:5000/liuqs/tensorflow:0.10.0-gpu
+      volumeMounts:
+      - mountPath: "/var/tensorflow"
+        name:  tf-ceph
+  volumes:
+    - name:  tf-ceph
+      persistentVolumeClaim:
+        claimName:  tf-ceph
 ```
 
+## 注意事项
+http://kubernetes.io/docs/user-guide/persistent-volumes/
+
+`
+Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time.
+`
+
 ## References:
+* http://kubernetes.io/docs/user-guide/persistent-volumes/
