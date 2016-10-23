@@ -2,7 +2,7 @@
 
 ## 准备驱动
 
-将[编译 GPU 驱动]((../build_gpu_drivers))生成的三个压缩包复制到 `setup_gpu.sh` 同目录
+将[编译 GPU 驱动](../build_gpu_drivers)生成的三个压缩包复制到 `setup_gpu.sh` 同目录
 
 压缩包 | 说明
 -------|-------
@@ -12,6 +12,10 @@ modules-[COREOS_VERSION]-[DRIVER_VERSION].tar.bz2 | GPU 驱动
 
 
 ## 加载驱动
+
+```bash
+sudo bash ./setup_gpu.sh COREOS_VERSION DRIVER_VERSION
+```
 
 以 `DRIVER_VERSION=367.57` 和 `COREOS_VERSION=1122.2.0` 为例：
 执行如下命令完成 GPU 配置：
