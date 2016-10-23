@@ -1,4 +1,4 @@
-# Nvidia GPU drivers on CoreOS
+# Compile Nvidia GPU drivers
 
 ## 编译方法对比
 编译方法：
@@ -35,28 +35,26 @@ e.g.
 The scripts will download both the official NVIDIA archive and the CoreOS
 developer images, caching them afterwards. It will then create three archives:
 
-```
-libraries-[DRIVER_VERSION].tar.bz2
-tools-[DRIVER_VERSION].tar.bz2
-modules-[COREOS_VERSION]-[DRIVER_VERSION].tar.bz2
-```
-
-说明：
-1.
+压缩包 | 说明
+-------|-------
+libraries-[DRIVER_VERSION].tar.bz2 | GPU 动态库
+tools-[DRIVER_VERSION].tar.bz2 | GPU 工具
+modules-[COREOS_VERSION]-[DRIVER_VERSION].tar.bz2 | GPU 驱动
 
 
-## 加载 drivers
+## 方法B编译结果
 
-参照：[load GPU drivers](../load_gpu_drivers)
+CoreOS Version | Nvidia driver | 编译结果
+---|---|---
+1010.5.0(4.5.0-coreos-rc1) | 367.35 | 编译通过，不能使用
+1068.9.0(4.6.3-coreos) | 367.35 | 编译通常，正常使用
+1122.2.0(4.7.0-coreos) | 367.57 | 编译通常，正常使用
+1122.3.0(4.7.0-coreos-rc1) | 367.35 | 编译不通过，kernel 接口有改动
+1122.3.0(4.7.0-coreos-rc1) | 367.57 | 编译通常，不能使用
 
+**结论**
 
-## 测试
-**查看 GPU 信息**
-
-```
-# docker run -it --rm --privileged cuda /bin/bash
-# root@9a1ab2d177b0:/opt/nvidia# ./nvidia-smi
-```
+**编译通过，而不能使用是 nvidia-uvm.ko 驱动文件大小过小，正常使用 nvidia-uvm.ko 和 nvidia.ko 大小相当（>10M），不能使用的 nvidia-uvm.ko 的文件大小在1M左右**
 
 ## 参考
 * 方法 A：https://github.com/emergingstack/es-dev-stack
