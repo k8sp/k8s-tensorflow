@@ -7,16 +7,21 @@
 开启 SSL 认证的 Harbor，需要在每台进行 docker login/push/pull 操作的机器上配置证书。其中 `harbor.ail.unisound.com` 为 Harbor 地址，`ca.crt` 是在配置 Harbor 是生成的证书。
 
 * CoreOS
+
   ```
    sudo bash ./update_certs_coreos.sh harbor.ail.unisound.com ca.crt
   ```
+
 * CentOS (Redhat)
+
   ```
-  sudo bash ./update_certs_coreos.sh harbor.ail.unisound.com ca.crt
+  sudo bash ./update_certs_centos.sh harbor.ail.unisound.com ca.crt
   ```
+
 * Ubuntu
+
   ```
-  sudo bash ./update_certs_coreos.sh harbor.ail.unisound.com ca.crt
+  sudo bash ./update_certs_ubuntu.sh harbor.ail.unisound.com ca.crt
   ```
 
 ## 使用 Harbor
