@@ -173,8 +173,7 @@ ps和work似乎不能在同一node中并存，否则会tf会core掉
 F tensorflow/core/distributed_runtime/graph_mgr.cc:55] 'unit.device' Must be non NULL
 Aborted (core dumped)
 ```
-## 登陆pod容器:
-部分结果
+##部分结果
 work0:
 ```
 Step: 2520, loss: 0.0276989098638, accuracy: 0.9521484375, auc: 0.976532936096
