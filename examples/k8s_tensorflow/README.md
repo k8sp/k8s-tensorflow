@@ -3,8 +3,8 @@
 ## Requirements:
 
 ## pull tensorflow image:
-docker pull tensorflow/tensorflow
 ```
+[xuerq@bogon train]$ docker pull tensorflow/tensorflow
 064f9af02539: Already exists 
 390957b2f4f0: Already exists 
 cee0974db2b8: Already exists 
@@ -128,9 +128,11 @@ core@00-25-90-c0-f6-ee ~/harbor $ sudo bash ./update_certs_coreos.sh harbor.ail.
 ...
 ```
 ## 登陆pod容器:
-kubectl exec -ti tensorflow-ps-rc-1jat1 -- bash （ps）
-kubectl exec -ti tensorflow-worker-rc-5tq2s -- bash（work1）
-kubectl exec -ti tensorflow-worker-rc-b8zgp -- bash（work2）
+kubectl exec -ti tensorflow-ps-rc-1jat1 -- bash (ps)
+
+kubectl exec -ti tensorflow-worker-rc-5tq2s -- bash (work1)
+
+kubectl exec -ti tensorflow-worker-rc-b8zgp -- bash (work2)
 ## 分别在ps和work中启动参数服务器和计算节点:
 ```
 curl https://codeload.github.com/tobegit3hub/deep_recommend_system/zip/master -o drs.zip
