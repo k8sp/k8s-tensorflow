@@ -54,6 +54,19 @@ spec:
         image: harbor.ail.unisound.com/xuerq/tensorflow:0.11.0
         ports:
         - containerPort: 2222
+        command: ["/bin/sh", "-c"]
+        args: ["curl \
+                   https://codeload.github.com/tobegit3hub/deep_recommend_system/zip/master\
+                   > drs.zip;
+               unzip drs.zip;
+               cd deep_recommend_system-master/distributed/;\
+               python cancer_classifier.py \
+                   --ps_hosts=tensorflow-ps-service.default.svc.cluster.local:2222 \
+                   --worker_hosts=tensorflow-wk-service0.default.svc.cluster.local:2222,\
+                                  tensorflow-wk-service1.default.svc.cluster.local:2222 \
+                   --job_name=ps \
+                  --task_index=0 >log 2>errlog
+               "]
       nodeName: 00-25-90-c0-f6-ee
 
 worker.yaml:
@@ -61,15 +74,15 @@ worker.yaml:
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: tensorflow-worker-rc
+  name: tensorflow-worker0-rc
 spec:
-  replicas: 2
+  replicas: 1
   selector:
-    name: tensorflow-worker
+    name: tensorflow-worker0
   template:
     metadata:
       labels:
-        name: tensorflow-worker
+        name: tensorflow-worker0
         role: worker
     spec:
       containers:
@@ -77,6 +90,53 @@ spec:
         image: harbor.ail.unisound.com/xuerq/tensorflow:0.11.0
         ports:
         - containerPort: 2222
+        command: ["/bin/sh", "-c"]
+        args: ["curl \
+                   https://codeload.github.com/tobegit3hub/deep_recommend_system/zip/master\
+                   > drs.zip;
+               unzip drs.zip;
+               cd deep_recommend_system-master/distributed/;\
+               python cancer_classifier.py \
+                   --ps_hosts=tensorflow-ps-service.default.svc.cluster.local:2222 \
+                   --worker_hosts=tensorflow-wk-service0.default.svc.cluster.local:2222,\
+                                  tensorflow-wk-service1.default.svc.cluster.local:2222 \
+                   --job_name=worker \
+                  --task_index=0 1>log 2>errlog
+               "]
+      nodeName: 0c-c4-7a-82-c5-bc
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: tensorflow-worker1-rc
+spec:
+  replicas: 1
+  selector:
+    name: tensorflow-worker1
+  template:
+    metadata:
+      labels:
+        name: tensorflow-worker1
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.11.0
+        ports:
+        - containerPort: 2222
+        command: ["/bin/sh", "-c"]
+        args: ["curl \
+                   https://codeload.github.com/tobegit3hub/deep_recommend_system/zip/master\
+                   > drs.zip;
+               unzip drs.zip;
+               cd deep_recommend_system-master/distributed/;\
+               python cancer_classifier.py \
+                   --ps_hosts=tensorflow-ps-service.default.svc.cluster.local:2222 \
+                   --worker_hosts=tensorflow-wk-service0.default.svc.cluster.local:2222,\
+                                  tensorflow-wk-service1.default.svc.cluster.local:2222 \
+                   --job_name=worker \
+                  --task_index=1 1>log 2>errlog
+               "]
       nodeName: 0c-c4-7a-82-c5-bc
 
 ```
@@ -126,47 +186,6 @@ spec:
 ```
 core@00-25-90-c0-f6-ee ~/harbor $ sudo bash ./update_certs_coreos.sh harbor.ail.unisound.com ca.crt
 ...
-```
-## 登陆pod容器:
-kubectl exec -ti tensorflow-ps-rc-1jat1 -- bash (ps)
-
-kubectl exec -ti tensorflow-worker-rc-5tq2s -- bash (work1)
-
-kubectl exec -ti tensorflow-worker-rc-b8zgp -- bash (work2)
-## 分别在ps和work中启动参数服务器和计算节点:
-```
-curl https://codeload.github.com/tobegit3hub/deep_recommend_system/zip/master -o drs.zip
-unzip drs.zip 
-cd deep_recommend_system-master/distributed/
-
-python cancer_classifier.py \                      
-             --ps_hosts=10.100.0.208:2222 \
-			 --worker_hosts=10.1.99.4:2222,10.1.99.5:2222 \
-			 --job_name=ps \
-			 --task_index=0
-I tensorflow/core/distributed_runtime/rpc/grpc_channel.cc:197] Initialize GrpcChannelCache for job ps -> {0 -> localhost:2222}
-I tensorflow/core/distributed_runtime/rpc/grpc_channel.cc:197] Initialize GrpcChannelCache for job worker -> {0 -> 10.1.99.4:2222, 1 -> 10.1.99.5:2222}
-I tensorflow/core/distributed_runtime/rpc/grpc_server_lib.cc:206] Started server with target: grpc://localhost:2222
-
-python cancer_classifier.py \                      
-              --ps_hosts=10.100.0.208:2222 \
-			  --worker_hosts=10.1.99.4:2222,10.1.99.5:2222 \
-			  --job_name=worker \
-			  --task_index=0
-I tensorflow/core/distributed_runtime/rpc/grpc_channel.cc:197] Initialize GrpcChannelCache for job ps -> {0 -> 10.100.0.208:2222}
-I tensorflow/core/distributed_runtime/rpc/grpc_channel.cc:197] Initialize GrpcChannelCache for job worker -> {0 -> localhost:2222, 1 -> 10.1.99.5:2222}
-I tensorflow/core/distributed_runtime/rpc/grpc_server_lib.cc:206] Started server with target: grpc://localhost:2222
-I tensorflow/core/distributed_runtime/master_session.cc:928] Start master session c7a1983b133768f6 with config: 
-
-python cancer_classifier.py \                      
-               --ps_hosts=10.100.0.208:2222 \
-			 --worker_hosts=10.1.7.3:2222,10.1.7.4:2222 \
-			 --job_name=worker \
-			 --task_index=1
-I tensorflow/core/distributed_runtime/rpc/grpc_channel.cc:197] Initialize GrpcChannelCache for job ps -> {0 -> 10.100.0.208:2222}
-I tensorflow/core/distributed_runtime/rpc/grpc_channel.cc:197] Initialize GrpcChannelCache for job worker -> {0 -> 10.1.7.3:2222, 1 -> localhost:2222}
-I tensorflow/core/distributed_runtime/rpc/grpc_server_lib.cc:206] Started server with target: grpc://localhost:2222
-I tensorflow/core/distributed_runtime/master_session.cc:928] Start master session 24a82b3c38013549 with config: 
 ```
 ps和work似乎不能在同一node中并存，否则会tf会core掉
 ```
