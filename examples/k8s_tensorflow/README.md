@@ -168,15 +168,29 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    name: tensorflow-worker
+    name: tensorflow-worker0
     role: service
-  name: tensorflow-wk-service
+  name: tensorflow-wk-service0
 spec:
   ports:
     - port: 2222
       targetPort: 2222
   selector:
-    name: tensorflow-worker
+    name: tensorflow-worker0
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tensorflow-worker1
+    role: service
+  name: tensorflow-wk-service1
+spec:
+  ports:
+    - port: 2222
+      targetPort: 2222
+  selector:
+    name: tensorflow-worker1
 ```
 ```
 [xuerq@bogon train]$ kubectl create -f ps-srv.yaml
