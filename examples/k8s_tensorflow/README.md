@@ -272,7 +272,7 @@ Step: 2940, loss: 0.0265841782093, accuracy: 0.951171875, auc: 0.976156234741
 ```
 
 ## Update: Add nfs & ConfigMap
-```
+```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
