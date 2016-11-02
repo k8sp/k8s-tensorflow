@@ -271,6 +271,208 @@ Step: 2920, loss: 0.0251851622015, accuracy: 0.9453125, auc: 0.976214468479
 Step: 2940, loss: 0.0265841782093, accuracy: 0.951171875, auc: 0.976156234741
 ```
 
+## Update: Add nfs & ConfigMap
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tensorflow-cluster-config
+data:
+  ps: 
+     "tensorflow-ps-service.default.svc.cluster.local:2222"
+  worker:
+     "tensorflow-wk-service0.default.svc.cluster.local:2222,tensorflow-wk-service1.default.svc.cluster.local:2222"
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: tensorflow-ps-rc
+spec:
+  replicas: 1
+  selector:
+    name: tensorflow-ps
+  template:
+    metadata:
+      labels:
+        name: tensorflow-ps
+        role: ps
+    spec:
+      containers:
+      - name: ps
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.11.0
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cp -r /nfs/deep_recommend_system-master ./;\
+               cd deep_recommend_system-master/distributed/;\
+               python cancer_classifier.py \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --job_name=ps \
+                   --task_index=0 1>log 2>errlog
+               "]
+        volumeMounts:
+        - name: nfs
+          mountPath: "/nfs"
+      volumes:
+      - name: nfs
+        nfs:
+          server: 10.10.10.39
+          path: "/home/xuerq/nfs"
+      nodeName: 00-25-90-c0-f6-ee
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tensorflow-ps
+    role: service
+  name: tensorflow-ps-service
+spec:
+  ports:
+    - port: 2222
+      targetPort: 2222
+  selector:
+    name: tensorflow-ps
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: tensorflow-worker0-rc
+spec:
+  replicas: 1
+  selector:
+    name: tensorflow-worker0
+  template:
+    metadata:
+      labels:
+        name: tensorflow-worker0
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.11.0
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cp -r /nfs/deep_recommend_system-master ./;\
+               cd deep_recommend_system-master/distributed/;\
+               python cancer_classifier.py \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --job_name=worker \
+                   --task_index=0 1>log 2>errlog
+               "]
+        volumeMounts:
+        - name: nfs
+          mountPath: "/nfs"
+      volumes:
+      - name: nfs
+        nfs:
+          server: 10.10.10.39
+          path: "/home/xuerq/nfs"
+      nodeName: 0c-c4-7a-82-c5-bc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tensorflow-worker0
+    role: service
+  name: tensorflow-wk-service0
+spec:
+  ports:
+    - port: 2222
+      targetPort: 2222
+  selector:
+    name: tensorflow-worker0
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: tensorflow-worker1-rc
+spec:
+  replicas: 1
+  selector:
+    name: tensorflow-worker1
+  template:
+    metadata:
+      labels:
+        name: tensorflow-worker1
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.11.0
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cp -r /nfs/deep_recommend_system-master ./;\
+               cd deep_recommend_system-master/distributed/;\
+               python cancer_classifier.py \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --job_name=worker \
+                   --task_index=1 1>log 2>errlog
+               "]
+        volumeMounts:
+        - name: nfs
+          mountPath: "/nfs"
+      volumes:
+      - name: nfs
+        nfs:
+          server: 10.10.10.39
+          path: "/home/xuerq/nfs"
+      nodeName: 0c-c4-7a-82-c5-bc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tensorflow-worker1
+    role: service
+  name: tensorflow-wk-service1
+spec:
+  ports:
+    - port: 2222
+      targetPort: 2222
+  selector:
+    name: tensorflow-worker1
+```
+
 ## References
 * http://www.cnblogs.com/xuxinkun/p/5983633.html
 * http://kubernetes.io/docs/user-guide/getting-into-containers/
