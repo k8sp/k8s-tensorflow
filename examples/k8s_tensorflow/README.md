@@ -3,7 +3,7 @@
 ## Requirements:
 
 ## pull tensorflow image:
-```
+```shell
 [xuerq@bogon train]$ docker pull tensorflow/tensorflow
 064f9af02539: Already exists 
 390957b2f4f0: Already exists 
@@ -20,19 +20,19 @@ Digest: sha256:0635a564b59ac45e9a44d7c38efee9bf6c9567150236e064d8e382fbbf54fe74
 Status: Downloaded newer image for tensorflow/tensorflow:latest
 ```
 ## login harbor:
-```
+```shell
 docker login https://harbor.ail.unisound.com
 Username: xueruiqing
 Password: 
 Login Succeeded
 ```
 ## tag & push image to harbor:
-```
+```shell
 [xuerq@bogon train]$ docker tag ef9825a3a86f harbor.ail.unisound.com/xuerq/tensorflow:0.11.0
 [xuerq@bogon train]$ docker push harbor.ail.unisound.com/xuerq/tensorflow:0.11.0
 ```
 ## create ps & worker pod:
-```
+```yaml
 ps.yaml:
 
 apiVersion: v1
@@ -140,12 +140,12 @@ spec:
       nodeName: 0c-c4-7a-82-c5-bc
 
 ```
-```
+```shell
 [xuerq@bogon train]$ kubectl create -f ps.yaml
 [xuerq@bogon train]$ kubectl create -f worker.yaml 
 ```
 ## create ps & worker server:
-```
+```yaml
 ps-srv.yaml:
 
 apiVersion: v1
@@ -192,17 +192,17 @@ spec:
   selector:
     name: tensorflow-worker1
 ```
-```
+```shell
 [xuerq@bogon train]$ kubectl create -f ps-srv.yaml
 [xuerq@bogon train]$ kubectl create -f worker.yaml
 ```
 ## 登陆节点配置证书(如需要):
-```
+```shell
 core@00-25-90-c0-f6-ee ~/harbor $ sudo bash ./update_certs_coreos.sh harbor.ail.unisound.com ca.crt
 ...
 ```
 ps和work似乎不能在同一node中并存，否则会tf会core掉
-```
+```shell
 F tensorflow/core/distributed_runtime/graph_mgr.cc:55] 'unit.device' Must be non NULL
 Aborted (core dumped)
 ```
