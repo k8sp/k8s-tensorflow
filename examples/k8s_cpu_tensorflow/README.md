@@ -5,18 +5,26 @@
 ## 摘要
 1. pull tensorflow images from github
 2. push tensorflow images to harbor
-3. 创建、编辑yaml：
-⋅⋅1. 创建一个ps service(对应一个ps pod)；
-⋅⋅2. 创建两个worker service(分别对应一个worker pod)
-注意：因为ps和worker节点需要对外暴露自己位置(域名)，所以需要每个pod(container)对应一个service，并配合kube-dns进行服务发现，参考下面一个官方例子和一个民间例子
+3. 创建、编辑yaml
 
-https://github.com/tensorflow/ecosystem/blob/master/kubernetes/template.yaml.jinja
-https://github.com/amygdala/tensorflow-workshop/blob/9bbc678e686407c5dccff87db702f9aeef9e34b7/workshop_sections/distributed_tensorflow/k8s-configs/tf-cluster.yaml
+创建一个ps service(对应一个ps pod)<br>
+创建两个worker service(分别对应一个worker pod)<br>
+
+注意：因为ps和worker节点需要对外暴露自己位置(域名)，所以需要每个pod(container)对应一个service，并配合kube-dns进行服务发现，参考下面一个官方例子和一个民间例子<br>
+
+https://github.com/tensorflow/ecosystem/blob/master/kubernetes/template.yaml.jinja <br>
+https://github.com/amygdala/tensorflow-workshop/blob/9bbc678e686407c5dccff87db702f9aeef9e34b7/workshop_sections/distributed_tensorflow/k8s-configs/tf-cluster.yaml <br>
+
 4. 获取tensorflow训练代码和数据
-大致有两个途径：
-⋅⋅1. 把代码和数据build进images，再分发到k8s节点。
-⋅⋅2. 分发clean的tf image到k8s节点，通过command字段运行一个启动脚本，从外网curl到container，或挂载一个内网的nfs目录(或ceph)到container
+
+大致有两个途径 <br>
+
+把代码和数据build进images，再分发到k8s节点。<br>
+
+分发clean的tf image到k8s节点，通过command字段运行一个启动脚本，从外网curl到container，或挂载一个内网的nfs目录(或ceph)到container <br>
+
 本文实验了从外网curl和从内网mount nfs以获取代码和数据
+
 5. update 2016-11-02：
 重新整理了yaml，增加了ConfigMap，简化ps节点和worker节点的定义
 
