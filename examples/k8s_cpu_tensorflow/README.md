@@ -17,11 +17,11 @@
 
 4. 获取tensorflow训练代码和数据
 
-   1) 大致有两个途径
+   大致有两个途径
 
-   2) 把代码和数据build进images，再分发到k8s节点。
+   1) 把代码和数据build进images，再分发到k8s节点。
 
-   分发clean的tf image到k8s节点，通过command字段运行一个启动脚本，从外网curl到container，或挂载一个内网的nfs目录(或ceph)到container 
+   2) 分发clean的tf image到k8s节点，通过command字段运行一个启动脚本，从外网curl到container，或挂载一个内网的nfs目录(或ceph)到container 
 
    本文实验了从外网curl和从内网mount nfs以获取代码和数据
 
