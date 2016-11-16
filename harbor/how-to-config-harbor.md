@@ -1,3 +1,5 @@
+# 配置 Harbor
+
 ## 证书生成
 * 若 harbor 域名为 harbor.ail.unisound.com，在 Ubuntu 上执行:
   ```bash
@@ -17,7 +19,6 @@ bash generate_cert.sh 10.10.14.253
 | dns/IP.key   | 供 nginx 配置 ssl            |
 | ca.crt       | 供 客户端设置访问            |
 
-# 配置 Harbor
 ## 配置文件修改
 
 
