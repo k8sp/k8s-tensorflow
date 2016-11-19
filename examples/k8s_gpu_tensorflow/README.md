@@ -84,7 +84,7 @@ worker2 节点的域名：tensorflow-wk-service1.default.svc.cluster.local<br>
 ```shell
 [xuerq@bogon train]$ kubectl create -f worker_ps_GPU.yaml
 ```
-**work_ps_GPU.yaml**
+**worker_ps_GPU.yaml**
 
 ```yaml
 apiVersion: v1
