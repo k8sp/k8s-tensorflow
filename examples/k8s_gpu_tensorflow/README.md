@@ -57,19 +57,19 @@ Username: xueruiqing
 Password: 
 Login Succeeded
 ```
+登陆节点配置证书(如需要):
+参考https://github.com/k8sp/k8s-tensorflow/tree/master/harbor
+```shell
+sudo bash ./update_certs_centos.sh harbor.ail.unisound.com ca.crt
+```
+
 tag & push image to harbor:
 ```shell
 [xuerq@bogon train]$ docker tag ef9825a3a86f harbor.ail.unisound.com/xuerq/tensorflow:0.10.0-devel-gpu
 [xuerq@bogon train]$ docker push harbor.ail.unisound.com/xuerq/tensorflow:0.10.0-devel-gpu
 ```
 
-## Step 2: 登陆节点配置证书(如需要):
-参考https://github.com/k8sp/k8s-tensorflow/tree/master/harbor
-```shell
-sudo bash ./update_certs_centos.sh harbor.ail.unisound.com ca.crt
-```
-
-## Step 3: create ps & worker:
+## Step 2: create ps & worker:
 1. 创建1个ps节点、2个worker节点
 2. 2个worker节点共用一份训练数据，存放在挂在的nfs目录中;log和模型输出也分别在nfs的单独的目录中
 3. 通过nvidia-libs-volume挂在宿主机/usr/local/nvidia/lib64, cuda库等
