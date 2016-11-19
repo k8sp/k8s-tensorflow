@@ -1,0 +1,246 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tensorflow-cluster-config
+data:
+  ps: 
+     "tensorflow-ps-service.default.svc.cluster.local:2222"
+  worker:
+     "tensorflow-wk-service0.default.svc.cluster.local:2222,tensorflow-wk-service1.default.svc.cluster.local:2222"
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: tensorflow-ps-rc
+spec:
+  replicas: 1
+  selector:
+    name: tensorflow-ps
+  template:
+    metadata:
+      labels:
+        name: tensorflow-ps
+        role: ps
+    spec:
+      containers:
+      - name: ps
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.10.0-devel-gpu
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cd /nfs/Dis_seq2seq/translate; \
+                rm -rf ./dir/train_ps; \
+                mkdir ./dir/train_ps; \
+                python translate.py \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --job_name=ps \
+                   --task_index=0 \
+                   --num_layers=2  --size=200 \
+                   --data_dir=./dir/dataBk  --train_dir=./dir/train_ps \
+                   1>./dir/train_ps/log \
+                   2>./dir/train_ps/errlog
+               "]
+        volumeMounts:
+        - name: nfs
+          mountPath: "/nfs"
+      volumes:
+      - name: nfs
+        nfs:
+          server: 10.10.10.39
+          path: "/home/xuerq/nfs"
+      nodeName: 0c-c4-7a-82-c5-bc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tensorflow-ps
+    role: service
+  name: tensorflow-ps-service
+spec:
+  ports:
+    - port: 2222
+      targetPort: 2222
+  selector:
+    name: tensorflow-ps
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: tensorflow-worker0-rc
+spec:
+  replicas: 1
+  selector:
+    name: tensorflow-worker0
+  template:
+    metadata:
+      labels:
+        name: tensorflow-worker0
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.10.0-devel-gpu
+        resources:
+          limits:
+            alpha.kubernetes.io/nvidia-gpu: 1
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cd /nfs/Dis_seq2seq/translate; \
+                rm -rf ./dir/train_worker0; \
+                mkdir ./dir/train_worker0; \
+                export CUDA_VISIBLE_DEVICES=0; \
+                python translate.py \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --job_name=worker \
+                   --task_index=0 \
+                   --num_layers=2  --size=200 \
+                   --data_dir=./dir/dataBk  --train_dir=./dir/train_worker0 \
+                   1>./dir/train_worker0/log \
+                   2>./dir/train_worker0/errlog
+               "]
+        volumeMounts:
+        - name: nfs
+          mountPath: "/nfs"
+        - name: nvidia-libs-volume
+          mountPath: /usr/local/nvidia/lib64
+          readOnly: true
+        - name: nvidia-tools-volume
+          mountPath: /usr/local/nvidia/bin
+          readOnly: true
+      volumes:
+      - name: nfs
+        nfs:
+          server: 10.10.10.39
+          path: "/home/xuerq/nfs"
+      - name: nvidia-libs-volume
+        hostPath: 
+          path: /usr/local/nvidia/lib64
+      - name: nvidia-tools-volume
+        hostPath: 
+          path: /usr/bin
+      nodeName: 0c-c4-7a-82-c5-bc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tensorflow-worker0
+    role: service
+  name: tensorflow-wk-service0
+spec:
+  ports:
+    - port: 2222
+      targetPort: 2222
+  selector:
+    name: tensorflow-worker0
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: tensorflow-worker1-rc
+spec:
+  replicas: 1
+  selector:
+    name: tensorflow-worker1
+  template:
+    metadata:
+      labels:
+        name: tensorflow-worker1
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.10.0-devel-gpu
+        resources:
+          limits:
+            alpha.kubernetes.io/nvidia-gpu: 1
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cd /nfs/Dis_seq2seq/translate; \
+                rm -rf ./dir/train_worker1; \
+                mkdir ./dir/train_worker1; \
+                export CUDA_VISIBLE_DEVICES=0; \
+                python translate.py \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --job_name=worker \
+                   --task_index=1 \
+                   --num_layers=2  --size=200 \
+                   --data_dir=./dir/dataBk  --train_dir=./dir/train_worker1 \
+                   1>./dir/train_worker1/log \
+                   2>./dir/train_worker1/errlog
+               "]
+        volumeMounts:
+        - name: nfs
+          mountPath: "/nfs"
+        - name: nvidia-libs-volume
+          mountPath: /usr/local/nvidia/lib64
+          readOnly: true
+        - name: nvidia-tools-volume
+          mountPath: /usr/local/nvidia/bin
+          readOnly: true
+      volumes:
+      - name: nfs
+        nfs:
+          server: 10.10.10.39
+          path: "/home/xuerq/nfs"
+      - name: nvidia-libs-volume
+        hostPath: 
+          path: /usr/local/nvidia/lib64
+      - name: nvidia-tools-volume
+        hostPath: 
+          path: /usr/bin
+      nodeName: 0c-c4-7a-82-c5-b8
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tensorflow-worker1
+    role: service
+  name: tensorflow-wk-service1
+spec:
+  ports:
+    - port: 2222
+      targetPort: 2222
+  selector:
+    name: tensorflow-worker1
