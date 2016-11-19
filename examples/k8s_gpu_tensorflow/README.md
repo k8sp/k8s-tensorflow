@@ -67,7 +67,6 @@ tag & push image to harbor:
 参考https://github.com/k8sp/k8s-tensorflow/tree/master/harbor
 ```shell
 sudo bash ./update_certs_centos.sh harbor.ail.unisound.com ca.crt
-...
 ```
 
 ## Step 3: create ps & worker:
@@ -77,10 +76,10 @@ sudo bash ./update_certs_centos.sh harbor.ail.unisound.com ca.crt
 4. 通过nvidia-tools-volume挂在宿主机/usr/bin，nvidia-smi等 
 5. 通过alpha.kubernetes.io/nvidia-gpu:1,申请宿主机gpu，目前版k8s只支持单机单gpu，单机多gpu还在pr中没有正式发布
 
-注：域名是根据service name生成的，如：
-ps节点的域名：tensorflow-ps-service.default.svc.cluster.local
-worker1 节点的域名：tensorflow-wk-service0.default.svc.cluster.local
-worker2 节点的域名：tensorflow-wk-service1.default.svc.cluster.local
+注：域名是根据service name生成的，如：<br>
+ps节点的域名：tensorflow-ps-service.default.svc.cluster.local<br>
+worker1 节点的域名：tensorflow-wk-service0.default.svc.cluster.local<br>
+worker2 节点的域名：tensorflow-wk-service1.default.svc.cluster.local<br>
 
 ```shell
 [xuerq@bogon train]$ kubectl create -f worker_ps_GPU.yaml
