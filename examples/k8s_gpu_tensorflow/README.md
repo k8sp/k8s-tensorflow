@@ -1,4 +1,4 @@
-# A Tutorial: Tensorflow on Kubernetes(GPUs)
+# A Tutorial: Tensorflow on Kubernetes(multi GPUs on single node)
 
 本Tutorial记录如何在kubernetes上运行一个多机单gpu的tensorflow seq2seq模型
 
@@ -29,8 +29,6 @@
 ## Requirements:
 1. 正常运行的k8s集群
 2. k8s集群支持gpu，alpha.kubernetes.io/nvidia-gpu字段可以正常使用
-3. 正常运行的kube-dns服务发现功能
-4. k8s集群外，一个正常运行的nfs服务
 
 ## Step 1: Prepare Tensorflow Images:
 ```shell
@@ -74,17 +72,103 @@ tag & push image to harbor:
 2. 2个worker节点共用一份训练数据，存放在挂在的nfs目录中;log和模型输出也分别在nfs的单独的目录中
 3. 通过nvidia-libs-volume挂在宿主机/usr/local/nvidia/lib64, cuda库等
 4. 通过nvidia-tools-volume挂在宿主机/usr/bin，nvidia-smi等 
-5. 通过alpha.kubernetes.io/nvidia-gpu:1,申请宿主机gpu，目前版k8s只支持单机单gpu，单机多gpu还在pr中没有正式发布
-
-注：域名是根据service name生成的，如：<br>
-ps节点的域名：tensorflow-ps-service.default.svc.cluster.local<br>
-worker1 节点的域名：tensorflow-wk-service0.default.svc.cluster.local<br>
-worker2 节点的域名：tensorflow-wk-service1.default.svc.cluster.local<br>
+5. 通过alpha.kubernetes.io/nvidia-gpu:1,申请宿主机gpu配额
 
 ```shell
-[xuerq@bogon train]$ kubectl create -f worker_ps_GPU.yaml
+[xuerq@bogon train]$ kubectl create -f worker_ps_service_GPU.yaml
 ```
-**worker_ps_GPU.yaml**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tensorflow-ps
+    role: service
+  name: tensorflow-ps-service
+spec:
+  ports:
+    - port: 2222
+      targetPort: 2222
+  selector:
+    name: tensorflow-ps
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tensorflow-worker0
+    role: service
+  name: tensorflow-wk-service0
+spec:
+  ports:
+    - port: 2222
+      targetPort: 2222
+  selector:
+    name: tensorflow-worker0
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tensorflow-worker1
+    role: service
+  name: tensorflow-wk-service1
+spec:
+  ports:
+    - port: 2222
+      targetPort: 2222
+  selector:
+    name: tensorflow-worker1
+
+```
+
+```shell
+[xuerq@bogon train]$ kubectl describe service #得到 ps 和 worker service 的 ip 和端口
+```
+```shell
+Name:			tensorflow-ps-service
+Namespace:		default
+Labels:			name=tensorflow-ps
+			role=service
+Selector:		name=tensorflow-ps
+Type:			ClusterIP
+IP:			10.100.0.153
+Port:			<unset>	2222/TCP
+Endpoints:		<none>
+Session Affinity:	None
+No events.
+
+Name:			tensorflow-wk-service0
+Namespace:		default
+Labels:			name=tensorflow-worker0
+			role=service
+Selector:		name=tensorflow-worker0
+Type:			ClusterIP
+IP:			10.100.0.174
+Port:			<unset>	2222/TCP
+Endpoints:		<none>
+Session Affinity:	None
+No events.
+
+Name:			tensorflow-wk-service1
+Namespace:		default
+Labels:			name=tensorflow-worker1
+			role=service
+Selector:		name=tensorflow-worker1
+Type:			ClusterIP
+IP:			10.100.0.119
+Port:			<unset>	2222/TCP
+Endpoints:		<none>
+Session Affinity:	None
+No events.
+```
+
+
+
+```shell
+[xuerq@bogon train]$ kubectl create -f worker_ps_GPU.yaml #此处需要填入 ps 和 worker 的ip 和端口
+```
+**worker_ps_rc_GPU.yaml**
 
 ```yaml
 apiVersion: v1
@@ -93,18 +177,17 @@ metadata:
   name: tensorflow-cluster-config
 data:
   ps: 
-     "tensorflow-ps-service.default.svc.cluster.local:2222"
+     "10.100.0.153:2222"
   worker:
-     "tensorflow-wk-service0.default.svc.cluster.local:2222,tensorflow-wk-service1.default.svc.cluster.local:2222"
+     "10.100.0.174:2222,\
+      10.100.0.119:2222"
 ---
-apiVersion: v1
-kind: ReplicationController
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: tensorflow-ps-rc
 spec:
-  replicas: 1
-  selector:
-    name: tensorflow-ps
+
   template:
     metadata:
       labels:
@@ -128,51 +211,35 @@ spec:
               name: tensorflow-cluster-config
               key: worker
         command: ["/bin/sh", "-c"]
-        args: ["cd /nfs/Dis_seq2seq/translate; \
-                rm -rf ./dir/train_ps; \
-                mkdir ./dir/train_ps; \
+        args: ["cd /root/tensorflow; \
+                rm -rf ./train_ps; \
+                mkdir ./train_ps; \
                 python translate.py \
-                   --ps_hosts=$(PS_KEY) \
-                   --worker_hosts=$(WORKER_KEY) \
                    --job_name=ps \
                    --task_index=0 \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
                    --num_layers=2  --size=200 \
-                   --data_dir=./dir/dataBk  --train_dir=./dir/train_ps \
-                   1>./dir/train_ps/log \
-                   2>./dir/train_ps/errlog
+                   --data_dir=./data  --train_dir=./train_ps \
+                   1>./train_ps/log \
+                   2>./train_ps/errlog
                "]
         volumeMounts:
-        - name: nfs
-          mountPath: "/nfs"
+        - name: work-path
+          mountPath: /root/tensorflow
+          readOnly: false
+      restartPolicy: Never
       volumes:
-      - name: nfs
-        nfs:
-          server: 10.10.10.39
-          path: "/home/xuerq/nfs"
+      - name: work-path
+        hostPath: 
+          path: /root/tensorflow
       nodeName: 0c-c4-7a-82-c5-bc
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    name: tensorflow-ps
-    role: service
-  name: tensorflow-ps-service
-spec:
-  ports:
-    - port: 2222
-      targetPort: 2222
-  selector:
-    name: tensorflow-ps
----
-apiVersion: v1
-kind: ReplicationController
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: tensorflow-worker0-rc
 spec:
-  replicas: 1
-  selector:
-    name: tensorflow-worker0
   template:
     metadata:
       labels:
@@ -199,34 +266,35 @@ spec:
               name: tensorflow-cluster-config
               key: worker
         command: ["/bin/sh", "-c"]
-        args: ["cd /nfs/Dis_seq2seq/translate; \
-                rm -rf ./dir/train_worker0; \
-                mkdir ./dir/train_worker0; \
+        args: ["cd /root/tensorflow; \
+                rm -rf ./train_worker0; \
+                mkdir ./train_worker0; \
                 export CUDA_VISIBLE_DEVICES=0; \
                 python translate.py \
-                   --ps_hosts=$(PS_KEY) \
-                   --worker_hosts=$(WORKER_KEY) \
                    --job_name=worker \
                    --task_index=0 \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
                    --num_layers=2  --size=200 \
-                   --data_dir=./dir/dataBk  --train_dir=./dir/train_worker0 \
-                   1>./dir/train_worker0/log \
-                   2>./dir/train_worker0/errlog
+                   --data_dir=./data  --train_dir=./train_worker0 \
+                   1>./train_worker0/log \
+                   2>./train_worker0/errlog
                "]
         volumeMounts:
-        - name: nfs
-          mountPath: "/nfs"
+        - name: work-path
+          mountPath: /root/tensorflow
+          readOnly: false
         - name: nvidia-libs-volume
           mountPath: /usr/local/nvidia/lib64
           readOnly: true
         - name: nvidia-tools-volume
           mountPath: /usr/local/nvidia/bin
           readOnly: true
+      restartPolicy: Never
       volumes:
-      - name: nfs
-        nfs:
-          server: 10.10.10.39
-          path: "/home/xuerq/nfs"
+      - name: work-path
+        hostPath: 
+          path: /root/tensorflow
       - name: nvidia-libs-volume
         hostPath: 
           path: /usr/local/nvidia/lib64
@@ -235,28 +303,11 @@ spec:
           path: /usr/bin
       nodeName: 0c-c4-7a-82-c5-bc
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    name: tensorflow-worker0
-    role: service
-  name: tensorflow-wk-service0
-spec:
-  ports:
-    - port: 2222
-      targetPort: 2222
-  selector:
-    name: tensorflow-worker0
----
-apiVersion: v1
-kind: ReplicationController
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: tensorflow-worker1-rc
 spec:
-  replicas: 1
-  selector:
-    name: tensorflow-worker1
   template:
     metadata:
       labels:
@@ -283,56 +334,43 @@ spec:
               name: tensorflow-cluster-config
               key: worker
         command: ["/bin/sh", "-c"]
-        args: ["cd /nfs/Dis_seq2seq/translate; \
-                rm -rf ./dir/train_worker1; \
-                mkdir ./dir/train_worker1; \
+        args: ["cd /root/tensorflow; \
+                rm -rf ./train_worker1; \
+                mkdir ./train_worker1; \
                 export CUDA_VISIBLE_DEVICES=0; \
                 python translate.py \
-                   --ps_hosts=$(PS_KEY) \
-                   --worker_hosts=$(WORKER_KEY) \
                    --job_name=worker \
                    --task_index=1 \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
                    --num_layers=2  --size=200 \
-                   --data_dir=./dir/dataBk  --train_dir=./dir/train_worker1 \
-                   1>./dir/train_worker1/log \
-                   2>./dir/train_worker1/errlog
+                   --data_dir=./data  --train_dir=./train_worker1 \
+                   1>./train_worker1/log \
+                   2>./train_worker1/errlog
                "]
         volumeMounts:
-        - name: nfs
-          mountPath: "/nfs"
+        - name: work-path
+          mountPath: /root/tensorflow
+          readOnly: false
         - name: nvidia-libs-volume
           mountPath: /usr/local/nvidia/lib64
           readOnly: true
         - name: nvidia-tools-volume
           mountPath: /usr/local/nvidia/bin
           readOnly: true
+      restartPolicy: Never
       volumes:
-      - name: nfs
-        nfs:
-          server: 10.10.10.39
-          path: "/home/xuerq/nfs"
+      - name: work-path
+        hostPath: 
+          path: /root/tensorflow
       - name: nvidia-libs-volume
         hostPath: 
           path: /usr/local/nvidia/lib64
       - name: nvidia-tools-volume
         hostPath: 
           path: /usr/bin
-      nodeName: 0c-c4-7a-82-c5-b8
+      nodeName: 0c-c4-7a-82-c5-bc
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    name: tensorflow-worker1
-    role: service
-  name: tensorflow-wk-service1
-spec:
-  ports:
-    - port: 2222
-      targetPort: 2222
-  selector:
-    name: tensorflow-worker1
 ```
 ## To be continued
 ## References
