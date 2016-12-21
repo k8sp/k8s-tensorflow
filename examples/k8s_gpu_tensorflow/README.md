@@ -123,7 +123,7 @@ spec:
 ```
 
 ```shell
-[xuerq@bogon train]$ kubectl describe service #得到 ps 和 worker service 的 ip 和端口
+[xuerq@bogon train]$ kubectl describe service #得到 ps 和 worker service 的 ip 和端口(如使用NDS忽略此步)
 ```
 ```shell
 Name:			tensorflow-ps-service
@@ -166,7 +166,7 @@ No events.
 
 
 ```shell
-[xuerq@bogon train]$ kubectl create -f worker_ps_GPU.yaml #此处需要填入 ps 和 worker 的ip 和端口
+[xuerq@bogon train]$ kubectl create -f worker_ps_job_GPU.yaml #此处需要填入 ps 和 worker 的ip 和端口
 ```
 **worker_ps_rc_GPU.yaml**
 
@@ -177,10 +177,11 @@ metadata:
   name: tensorflow-cluster-config
 data:
   ps: 
-     "10.100.0.153:2222"
+     "tensorflow-ps-service.default.svc.cluster.local:2222"
   worker:
-     "10.100.0.174:2222,\
-      10.100.0.119:2222"
+     "tensorflow-wk-service0.default.svc.cluster.local:2222,\
+      tensorflow-wk-service1.default.svc.cluster.local:2222,\
+      tensorflow-wk-service2.default.svc.cluster.local:2222"
 ---
 apiVersion: batch/v1
 kind: Job
@@ -301,7 +302,7 @@ spec:
       - name: nvidia-tools-volume
         hostPath: 
           path: /usr/bin
-      nodeName: 0c-c4-7a-82-c5-bc
+      nodeName: 0c-c4-7a-82-c5-b8
 ---
 apiVersion: batch/v1
 kind: Job
@@ -369,7 +370,7 @@ spec:
       - name: nvidia-tools-volume
         hostPath: 
           path: /usr/bin
-      nodeName: 0c-c4-7a-82-c5-bc
+      nodeName: 0c-c4-7a-82-c5-b8
 
 ```
 ## To be continued
