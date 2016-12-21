@@ -1,4 +1,4 @@
-# A Tutorial: Tensorflow on Kubernetes(multi GPUs on single node)
+# A Tutorial: Tensorflow on Kubernetes(multi GPUs on multi nodes)
 
 本Tutorial记录如何在kubernetes上运行一个多机单gpu的tensorflow seq2seq模型
 
