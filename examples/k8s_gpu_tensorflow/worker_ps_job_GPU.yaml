@@ -15,7 +15,6 @@ kind: Job
 metadata:
   name: tensorflow-ps-rc
 spec:
-
   template:
     metadata:
       labels:
@@ -129,7 +128,7 @@ spec:
       - name: nvidia-tools-volume
         hostPath: 
           path: /usr/bin
-      nodeName: 0c-c4-7a-82-c5-b8
+      nodeName: 0c-c4-7a-82-c5-bc
 ---
 apiVersion: batch/v1
 kind: Job
@@ -175,6 +174,74 @@ spec:
                    --data_dir=./data  --train_dir=./train_worker1 \
                    1>./train_worker1/log \
                    2>./train_worker1/errlog
+               "]
+        volumeMounts:
+        - name: work-path
+          mountPath: /root/tensorflow
+          readOnly: false
+        - name: nvidia-libs-volume
+          mountPath: /usr/local/nvidia/lib64
+          readOnly: true
+        - name: nvidia-tools-volume
+          mountPath: /usr/local/nvidia/bin
+          readOnly: true
+      restartPolicy: Never
+      volumes:
+      - name: work-path
+        hostPath: 
+          path: /root/tensorflow
+      - name: nvidia-libs-volume
+        hostPath: 
+          path: /usr/local/nvidia/lib64
+      - name: nvidia-tools-volume
+        hostPath: 
+          path: /usr/bin
+      nodeName: 0c-c4-7a-82-c5-b8
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tensorflow-worker2-rc
+spec:
+  template:
+    metadata:
+      labels:
+        name: tensorflow-worker2
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.10.0-devel-gpu
+        resources:
+          limits:
+            alpha.kubernetes.io/nvidia-gpu: 2
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cd /root/tensorflow; \
+                rm -rf ./train_worker2; \
+                mkdir ./train_worker2; \
+                export CUDA_VISIBLE_DEVICES=0,1; \
+                python translate.py \
+                   --job_name=worker \
+                   --task_index=2 \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --num_layers=2  --size=200 \
+                   --data_dir=./data  --train_dir=./train_worker2 \
+                   1>./train_worker2/log \
+                   2>./train_worker2/errlog
                "]
         volumeMounts:
         - name: work-path
