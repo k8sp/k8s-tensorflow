@@ -1,0 +1,267 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tensorflow-cluster-config
+data:
+  ps: 
+     "tensorflow-ps-service.default.svc.cluster.local:2222"
+  worker:
+     "tensorflow-wk-service0.default.svc.cluster.local:2222,\
+      tensorflow-wk-service1.default.svc.cluster.local:2222,\
+      tensorflow-wk-service2.default.svc.cluster.local:2222"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tensorflow-ps-rc
+spec:
+  template:
+    metadata:
+      labels:
+        name: tensorflow-ps
+        role: ps
+    spec:
+      containers:
+      - name: ps
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.10.0-devel-gpu
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cd /root/tensorflow; \
+                rm -rf ./train_ps; \
+                mkdir ./train_ps; \
+                python translate.py \
+                   --job_name=ps \
+                   --task_index=0 \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --num_layers=2  --size=200 \
+                   --data_dir=./data  --train_dir=./train_ps \
+                   1>./train_ps/log \
+                   2>./train_ps/errlog
+               "]
+        volumeMounts:
+        - name: work-path
+          mountPath: /root/tensorflow
+          readOnly: false
+      restartPolicy: Never
+      volumes:
+      - name: work-path
+        hostPath: 
+          path: /root/tensorflow
+      nodeName: 0c-c4-7a-82-c5-bc
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tensorflow-worker0-rc
+spec:
+  template:
+    metadata:
+      labels:
+        name: tensorflow-worker0
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.10.0-devel-gpu
+        resources:
+          limits:
+            alpha.kubernetes.io/nvidia-gpu: 1
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cd /root/tensorflow; \
+                rm -rf ./train_worker0; \
+                mkdir ./train_worker0; \
+                export CUDA_VISIBLE_DEVICES=0; \
+                python translate.py \
+                   --job_name=worker \
+                   --task_index=0 \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --num_layers=2  --size=200 \
+                   --data_dir=./data  --train_dir=./train_worker0 \
+                   1>./train_worker0/log \
+                   2>./train_worker0/errlog
+               "]
+        volumeMounts:
+        - name: work-path
+          mountPath: /root/tensorflow
+          readOnly: false
+        - name: nvidia-libs-volume
+          mountPath: /usr/local/nvidia/lib64
+          readOnly: true
+        - name: nvidia-tools-volume
+          mountPath: /usr/local/nvidia/bin
+          readOnly: true
+      restartPolicy: Never
+      volumes:
+      - name: work-path
+        hostPath: 
+          path: /root/tensorflow
+      - name: nvidia-libs-volume
+        hostPath: 
+          path: /usr/local/nvidia/lib64
+      - name: nvidia-tools-volume
+        hostPath: 
+          path: /usr/bin
+      nodeName: 0c-c4-7a-82-c5-bc
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tensorflow-worker1-rc
+spec:
+  template:
+    metadata:
+      labels:
+        name: tensorflow-worker1
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.10.0-devel-gpu
+        resources:
+          limits:
+            alpha.kubernetes.io/nvidia-gpu: 1
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cd /root/tensorflow; \
+                rm -rf ./train_worker1; \
+                mkdir ./train_worker1; \
+                export CUDA_VISIBLE_DEVICES=0; \
+                python translate.py \
+                   --job_name=worker \
+                   --task_index=1 \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --num_layers=2  --size=200 \
+                   --data_dir=./data  --train_dir=./train_worker1 \
+                   1>./train_worker1/log \
+                   2>./train_worker1/errlog
+               "]
+        volumeMounts:
+        - name: work-path
+          mountPath: /root/tensorflow
+          readOnly: false
+        - name: nvidia-libs-volume
+          mountPath: /usr/local/nvidia/lib64
+          readOnly: true
+        - name: nvidia-tools-volume
+          mountPath: /usr/local/nvidia/bin
+          readOnly: true
+      restartPolicy: Never
+      volumes:
+      - name: work-path
+        hostPath: 
+          path: /root/tensorflow
+      - name: nvidia-libs-volume
+        hostPath: 
+          path: /usr/local/nvidia/lib64
+      - name: nvidia-tools-volume
+        hostPath: 
+          path: /usr/bin
+      nodeName: 0c-c4-7a-82-c5-b8
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tensorflow-worker2-rc
+spec:
+  template:
+    metadata:
+      labels:
+        name: tensorflow-worker2
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: harbor.ail.unisound.com/xuerq/tensorflow:0.10.0-devel-gpu
+        resources:
+          limits:
+            alpha.kubernetes.io/nvidia-gpu: 2
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PS_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: ps
+        - name: WORKER_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: tensorflow-cluster-config
+              key: worker
+        command: ["/bin/sh", "-c"]
+        args: ["cd /root/tensorflow; \
+                rm -rf ./train_worker2; \
+                mkdir ./train_worker2; \
+                export CUDA_VISIBLE_DEVICES=0,1; \
+                python translate.py \
+                   --job_name=worker \
+                   --task_index=2 \
+                   --ps_hosts=$(PS_KEY) \
+                   --worker_hosts=$(WORKER_KEY) \
+                   --num_layers=2  --size=200 \
+                   --data_dir=./data  --train_dir=./train_worker2 \
+                   1>./train_worker2/log \
+                   2>./train_worker2/errlog
+               "]
+        volumeMounts:
+        - name: work-path
+          mountPath: /root/tensorflow
+          readOnly: false
+        - name: nvidia-libs-volume
+          mountPath: /usr/local/nvidia/lib64
+          readOnly: true
+        - name: nvidia-tools-volume
+          mountPath: /usr/local/nvidia/bin
+          readOnly: true
+      restartPolicy: Never
+      volumes:
+      - name: work-path
+        hostPath: 
+          path: /root/tensorflow
+      - name: nvidia-libs-volume
+        hostPath: 
+          path: /usr/local/nvidia/lib64
+      - name: nvidia-tools-volume
+        hostPath: 
+          path: /usr/bin
+      nodeName: 0c-c4-7a-82-c5-b8
