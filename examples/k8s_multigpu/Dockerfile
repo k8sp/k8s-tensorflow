@@ -1,7 +1,7 @@
-FROM 10.10.10.94:5000/liuqs_tf
+FROM bootstrapper:5000/liuqs_public/tensorflow:1.1.0-gpu 
 
 RUN mkdir /examples
-COPY list_gpu.py /examples/
+COPY ["list_gpu.py", "test.sh",  "/examples/"]
 WORKDIR /examples
 
-#CMD ["python","./test.py"]
+CMD ["./test.sh"]
