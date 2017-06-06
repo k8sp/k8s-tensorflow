@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: using-gpu
+  name: test-list-gpu
 spec:
   volumes:
   - name: nvidia-libs-volume
@@ -14,7 +14,7 @@ spec:
         runAsUser: 100
   containers:
   - name: nvidia-gpu
-    image: bootstrapper:5000/zhanghui/tensorflow-test
+    image: bootstrapper:5000/zhanghui/tensorflow-test:1.1.0-gpu
     command: [/bin/bash, -c]
     args: [sleep 1d]
     volumeMounts:
@@ -26,4 +26,4 @@ spec:
         readOnly: true
     resources:
       limits:
-        alpha.kubernetes.io/nvidia-gpu: 3
+        alpha.kubernetes.io/nvidia-gpu: 1
