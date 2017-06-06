@@ -10,14 +10,11 @@ spec:
   - name: nvidia-tools-volume
     hostPath: 
       path: /usr/local/nvidia/bin
-  - name: tmp
-    hostPath:
-      path: /tmp
   securityContext:
         runAsUser: 100
   containers:
   - name: nvidia-gpu
-    image: bootstrapper:5000/zhanghui/tf-gpu-test
+    image: bootstrapper:5000/zhanghui/tensorflow-test:1.1.0-gpu
     command: [/bin/bash, -c]
     args: [sleep 1d]
     volumeMounts:
@@ -27,9 +24,6 @@ spec:
       - name: nvidia-tools-volume
         mountPath: /usr/local/nvidia/bin
         readOnly: true
-      - name: tmp
-        mountPath: /tmp
-        readOnly: false
     resources:
       limits:
-        alpha.kubernetes.io/nvidia-gpu: 3
+        alpha.kubernetes.io/nvidia-gpu: 1
