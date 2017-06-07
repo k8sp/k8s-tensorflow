@@ -45,8 +45,7 @@ def main(_):
     cost_op = tf.square(Y - tf.mul(X, w) - b)
     train_op = tf.train.GradientDescentOptimizer(0.01).minimize(cost_op)
 
-    global_step = tf.Variable(0)
-
+    global_step = tf.Variable(0, trainable=False)
 
     with tf.device(tf.train.replica_device_setter(
         worker_device="/job:worker/task:%d" % FLAGS.task_index,
