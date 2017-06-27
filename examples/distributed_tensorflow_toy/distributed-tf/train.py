@@ -43,7 +43,7 @@ def main(_):
 			train_op = tf.train.AdagradOptimizer(0.01).minimize(cost_op, global_step=global_step)
 
 			# the StopAtSetpHook handles stopping after running given steps.
-			hooks=[tf.train.StopAtStepHook(last_step=1000000)]
+			hooks=[tf.train.StopAtStepHook(last_step=10)]
 
 			 # The MonitoredTrainingSession takes care of session initialization,
    			 # restoring from a checkpoint, saving to a checkpoint, and closing when done

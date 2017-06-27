@@ -42,7 +42,7 @@ def main(_):
     b = tf.Variable(0.0, name="reminder")
 
     init_op = tf.initialize_all_variables()
-    cost_op = tf.square(Y - tf.mul(X, w) - b)
+    cost_op = tf.square(Y - tf.multiply(X, w) - b)
     train_op = tf.train.GradientDescentOptimizer(0.01).minimize(cost_op)
 
     global_step = tf.Variable(0, trainable=False)
