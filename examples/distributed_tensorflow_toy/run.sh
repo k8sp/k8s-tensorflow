@@ -1,7 +1,6 @@
 #!/bin/bash
 
-IMAGE=bootstrapper:5000/zhanghui/toy
-
-docker build  -f Dockerfile.k8s -t ${IMAGE} . && docker push ${IMAGE} || true
-
-
+CUDA_VISIBLE_DEVICES='' python ./toy.py --ps_hosts=127.0.0.1:2222,127.0.0.1:2223 --worker_hosts=127.0.0.1:2224,127.0.0.1:2225 --job_name=ps --task_index=0
+CUDA_VISIBLE_DEVICES='' python ./toy.py --ps_hosts=127.0.0.1:2222,127.0.0.1:2223 --worker_hosts=127.0.0.1:2224,127.0.0.1:2225 --job_name=ps --task_index=1
+CUDA_VISIBLE_DEVICES='0' python ./toy.py --ps_hosts=127.0.0.1:2222,127.0.0.1:2223 --worker_hosts=127.0.0.1:2224,127.0.0.1:2225 --job_name=worker --task_index=0
+CUDA_VISIBLE_DEVICES='1' python ./toy.py --ps_hosts=127.0.0.1:2222,127.0.0.1:2223 --worker_hosts=127.0.0.1:2224,127.0.0.1:2225 --job_name=worker --task_index=1
