@@ -1,18 +1,25 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: test-list-gpu
+  name: using-gpu
 spec:
   volumes:
   - name: nvidia-libs-volume
     hostPath: 
-      path: /var/lib/nvidia 
+      path: /usr/local/nvidia/lib64 
   - name: nvidia-tools-volume
     hostPath: 
-      path: /opt/bin
+      path: /usr/local/nvidia/bin
+  securityContext:
+        runAsUser: 100
   containers:
   - name: nvidia-gpu
-    image: 10.10.10.94:5000/liuqs/list_gpu
+    image: bootstrapper:5000/zhanghui/tensorflow-test
+    command: [/bin/bash, -c]
+    env:
+      - name: HOME
+        value: /tmp
+    args: [sleep 1d]
     volumeMounts:
       - name: nvidia-libs-volume
         mountPath: /usr/local/nvidia/lib64
@@ -22,4 +29,4 @@ spec:
         readOnly: true
     resources:
       limits:
-        alpha.kubernetes.io/nvidia-gpu: 2
+        alpha.kubernetes.io/nvidia-gpu: 3

@@ -2,8 +2,8 @@
 本文档介绍如何在 Kubernetes 集群中运行 GPU 版 Tensorflow 任务，主要包括：
 
 ## 配置集群节点 GPU
-* [build GPU drivers](build_gpu_drivers)
-* [load GPU drivers](load_gpu_drivers)
+* [build GPU drivers](gpu/build_gpu_drivers)
+* [load GPU drivers](gpu/load_gpu_drivers)
 
 docker GPU 示例包括：
 * [gpu_docker_tensorflow_mat_multi](examples/gpu_docker_tensorflow_mat_multi)

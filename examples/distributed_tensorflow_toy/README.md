@@ -130,3 +130,4 @@ I tensorflow/core/distributed_runtime/rpc/grpc_server_lib.cc:202] Started server
 * https://github.com/tobegit3hub/tensorflow_examples/tree/master/distributed_tensorflow
 * http://weibo.com/ttarticle/p/show?id=2309403988813608274928
 * http://weibo.com/ttarticle/p/show?id=2309403987407065210809
+* [tf destributed train](https://www.tensorflow.org/deploy/distributed)

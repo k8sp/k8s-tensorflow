@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tf-dist 
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: alpha.kubernetes.io/nvidia-gpu-name
+            operator: In
+            values:
+            - Tesla_K20Xm
+  volumes:
+  - name: nvidia-libs-volume
+    hostPath: 
+      path: /usr/local/nvidia/lib64 
+  - name: nvidia-tools-volume
+    hostPath: 
+      path: /usr/local/nvidia/bin
+  securityContext:
+        runAsUser: 100
+  containers:
+  - name: toy 
+    image: bootstrapper:5000/zhanghui/toy 
+    command: [/bin/bash, -c]
+    env:
+      - name: HOME
+        value: /tmp
+    args: [sleep 1d]
+    volumeMounts:
+      - name: nvidia-libs-volume
+        mountPath: /usr/local/nvidia/lib64
+        readOnly: true
+      - name: nvidia-tools-volume
+        mountPath: /usr/local/nvidia/bin
+        readOnly: true
+    resources:
+      limits:
+        alpha.kubernetes.io/nvidia-gpu: 2
+
