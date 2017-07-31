@@ -95,6 +95,7 @@ def test_queue():
             # Create the Timeline object, and write it to a json
             tl = timeline.Timeline(run_metadata.step_stats)
             ctf = tl.generate_chrome_trace_format()
+	    # using `chrome://tracing/` on chrome load this josn
             with open('timeline.json', 'w') as f:
                 print("writing to timeline.json")
                 f.write(ctf)
